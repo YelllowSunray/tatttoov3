@@ -72,43 +72,54 @@ export function Gallery({ onRequireAuth, initialFilters }: GalleryProps) {
   }, [loadData]);
 
   // Apply saved preferences from beginners questionnaire or user profile
+  // NOTE: When gallery loads/reloads, filters are CLEARED first, then preferences are applied
+  // This ensures a clean state on page load
   useEffect(() => {
     const applyPreferences = async () => {
+      // Start with cleared filters
+      const defaultFilters: FilterOptions = {
+        search: '',
+        style: '',
+        bodyPart: '',
+        color: 'all',
+        minPrice: '',
+        maxPrice: '',
+        location: '',
+        parlor: '',
+        sortBy: 'newest',
+      };
+
       // First check localStorage (for immediate redirect from questionnaire)
       const savedPreferences = localStorage.getItem('tattooPreferences');
       if (savedPreferences) {
         try {
           const prefs = JSON.parse(savedPreferences);
-          setFilters(prevFilters => {
-            const newFilters: FilterOptions = { ...prevFilters };
-            
-            // Apply first selected style if available
-            if (prefs.styles && prefs.styles.length > 0) {
-              newFilters.style = prefs.styles[0];
+          
+          // Apply preferences to cleared filters
+          if (prefs.styles && prefs.styles.length > 0) {
+            defaultFilters.style = prefs.styles[0];
+          }
+          
+          if (prefs.bodyParts && prefs.bodyParts.length > 0) {
+            defaultFilters.bodyPart = prefs.bodyParts[0];
+          }
+          
+          if (prefs.colorPreference) {
+            if (prefs.colorPreference === 'color') {
+              defaultFilters.color = 'color';
+            } else if (prefs.colorPreference === 'bw') {
+              defaultFilters.color = 'bw';
+            } else {
+              defaultFilters.color = 'all';
             }
-            
-            // Apply first selected body part if available
-            if (prefs.bodyParts && prefs.bodyParts.length > 0) {
-              newFilters.bodyPart = prefs.bodyParts[0];
-            }
-            
-            // Apply color preference
-            if (prefs.colorPreference) {
-              if (prefs.colorPreference === 'color') {
-                newFilters.color = 'color';
-              } else if (prefs.colorPreference === 'bw') {
-                newFilters.color = 'bw';
-              } else {
-                newFilters.color = 'all';
-              }
-            }
-            
-            return newFilters;
-          });
+          }
+          
+          setFilters(defaultFilters);
           // Clear the saved preferences after applying
           localStorage.removeItem('tattooPreferences');
         } catch (err) {
           console.error('Error parsing saved preferences:', err);
+          setFilters(defaultFilters);
         }
       } else if (user?.uid) {
         // If no localStorage preferences, check user profile for the most recent filter set
@@ -120,36 +131,37 @@ export function Gallery({ onRequireAuth, initialFilters }: GalleryProps) {
               (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0)
             )[0];
             
-            setFilters(prevFilters => {
-              const newFilters: FilterOptions = { ...prevFilters };
-              
-              // Apply first selected style if available
-              if (mostRecent.styles && mostRecent.styles.length > 0) {
-                newFilters.style = mostRecent.styles[0];
+            // Apply preferences to cleared filters
+            if (mostRecent.styles && mostRecent.styles.length > 0) {
+              defaultFilters.style = mostRecent.styles[0];
+            }
+            
+            if (mostRecent.bodyParts && mostRecent.bodyParts.length > 0) {
+              defaultFilters.bodyPart = mostRecent.bodyParts[0];
+            }
+            
+            if (mostRecent.colorPreference) {
+              if (mostRecent.colorPreference === 'color') {
+                defaultFilters.color = 'color';
+              } else if (mostRecent.colorPreference === 'bw') {
+                defaultFilters.color = 'bw';
+              } else {
+                defaultFilters.color = 'all';
               }
-              
-              // Apply first selected body part if available
-              if (mostRecent.bodyParts && mostRecent.bodyParts.length > 0) {
-                newFilters.bodyPart = mostRecent.bodyParts[0];
-              }
-              
-              // Apply color preference
-              if (mostRecent.colorPreference) {
-                if (mostRecent.colorPreference === 'color') {
-                  newFilters.color = 'color';
-                } else if (mostRecent.colorPreference === 'bw') {
-                  newFilters.color = 'bw';
-                } else {
-                  newFilters.color = 'all';
-                }
-              }
-              
-              return newFilters;
-            });
+            }
+            
+            setFilters(defaultFilters);
+          } else {
+            // No filter sets found, just clear filters
+            setFilters(defaultFilters);
           }
         } catch (err) {
           console.error('Error loading user preferences:', err);
+          setFilters(defaultFilters);
         }
+      } else {
+        // No user, just clear filters
+        setFilters(defaultFilters);
       }
     };
     

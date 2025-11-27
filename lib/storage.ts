@@ -50,4 +50,27 @@ export function getTattooImagePath(userId: string, tattooId: string, fileName: s
   return `tattoos/${userId}/${tattooId}_${timestamp}.${extension}`;
 }
 
+/**
+ * Generate a unique path for user-generated tattoo images
+ * @param userId - Firebase Auth user ID
+ * @param tattooId - Generated tattoo document ID
+ * @returns Storage path
+ */
+export function getGeneratedTattooImagePath(userId: string, tattooId: string): string {
+  const timestamp = Date.now();
+  return `generated_tattoos/${userId}/${tattooId}_${timestamp}.png`;
+}
+
+/**
+ * Convert a blob URL to a File object
+ * @param blobUrl - The blob URL to convert
+ * @param fileName - Name for the file
+ * @returns Promise that resolves to a File object
+ */
+export async function blobUrlToFile(blobUrl: string, fileName: string): Promise<File> {
+  const response = await fetch(blobUrl);
+  const blob = await response.blob();
+  return new File([blob], fileName, { type: blob.type || 'image/png' });
+}
+
 

@@ -17,6 +17,7 @@ import { Artist, Tattoo, UserLike, Inquiry, ArtistStats, UserPreferences, Filter
 // Collection names
 const ARTISTS_COLLECTION = 'artists';
 const TATTOOS_COLLECTION = 'tattoos';
+const GENERATED_TATTOOS_COLLECTION = 'generated_tattoos';
 const LIKES_COLLECTION = 'likes';
 const INQUIRIES_COLLECTION = 'inquiries';
 const ARTIST_STATS_COLLECTION = 'artist_stats';
@@ -248,6 +249,54 @@ export async function deleteFilterSet(userId: string, filterSetId: string): Prom
       updatedAt: serverTimestamp(),
     });
   }
+}
+
+// Save a generated tattoo
+export interface GeneratedTattoo {
+  id: string;
+  userId: string;
+  imageUrl: string;
+  prompt: string;
+  subjectMatter: string;
+  filterSetId?: string;
+  filterSetName?: string;
+  styles?: string[];
+  sizePreference?: string;
+  colorPreference?: string;
+  bodyParts?: string[];
+  createdAt?: number;
+  updatedAt?: number;
+}
+
+export async function saveGeneratedTattoo(
+  userId: string,
+  data: {
+    imageUrl: string;
+    prompt: string;
+    subjectMatter: string;
+    filterSetId?: string;
+    filterSetName?: string;
+    styles?: string[];
+    sizePreference?: string;
+    colorPreference?: string;
+    bodyParts?: string[];
+  }
+): Promise<string> {
+  const docRef = doc(collection(db, GENERATED_TATTOOS_COLLECTION));
+  await setDoc(docRef, {
+    userId,
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+  return docRef.id;
+}
+
+// Get all generated tattoos for a user
+export async function getUserGeneratedTattoos(userId: string): Promise<GeneratedTattoo[]> {
+  const q = query(collection(db, GENERATED_TATTOOS_COLLECTION), where('userId', '==', userId));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GeneratedTattoo));
 }
 
 

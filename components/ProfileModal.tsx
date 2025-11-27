@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { getUserPreferences, deleteFilterSet } from '@/lib/firestore';
+import { getUserPreferences, deleteFilterSet, getUserGeneratedTattoos, GeneratedTattoo } from '@/lib/firestore';
 import { FilterSet, UserPreferences } from '@/types';
 import { FilterOptions } from './FilterBar';
 import { GenerateTattooModal } from './GenerateTattooModal';
+import Image from 'next/image';
 
 interface ProfileModalProps {
   onClose: () => void;
@@ -16,19 +17,26 @@ export function ProfileModal({ onClose, onApplyFilters }: ProfileModalProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [filterSets, setFilterSets] = useState<FilterSet[]>([]);
+  const [generatedTattoos, setGeneratedTattoos] = useState<GeneratedTattoo[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [generatingForFilterSet, setGeneratingForFilterSet] = useState<FilterSet | null>(null);
+  const [activeTab, setActiveTab] = useState<'filters' | 'tattoos'>('filters');
 
   useEffect(() => {
-    const loadPreferences = async () => {
+    const loadData = async () => {
       if (user?.uid) {
         try {
+          // Load filter sets
           const preferences = await getUserPreferences(user.uid);
           if (preferences && preferences.filterSets) {
             setFilterSets(preferences.filterSets);
           }
+          
+          // Load generated tattoos
+          const tattoos = await getUserGeneratedTattoos(user.uid);
+          setGeneratedTattoos(tattoos);
         } catch (err) {
-          console.error('Error loading preferences:', err);
+          console.error('Error loading data:', err);
         } finally {
           setLoading(false);
         }
@@ -36,7 +44,7 @@ export function ProfileModal({ onClose, onApplyFilters }: ProfileModalProps) {
         setLoading(false);
       }
     };
-    loadPreferences();
+    loadData();
   }, [user]);
 
   const handleDelete = async (filterSetId: string) => {
@@ -110,11 +118,38 @@ export function ProfileModal({ onClose, onApplyFilters }: ProfileModalProps) {
           </svg>
         </button>
 
-        <h2 className="mb-8 sm:mb-10 text-2xl sm:text-3xl md:text-4xl font-light tracking-[-0.02em] text-black">
-          Saved Filter Sets
+        <h2 className="mb-6 sm:mb-8 text-2xl sm:text-3xl md:text-4xl font-light tracking-[-0.02em] text-black">
+          Profile
         </h2>
 
-        {filterSets.length === 0 ? (
+        {/* Tabs */}
+        <div className="mb-8 flex gap-2 border-b border-black/10">
+          <button
+            onClick={() => setActiveTab('filters')}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'filters'
+                ? 'text-black border-b-2 border-black'
+                : 'text-black/50 hover:text-black/70'
+            }`}
+          >
+            Filter Sets ({filterSets.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('tattoos')}
+            className={`px-4 py-2 text-sm font-medium transition-colors ${
+              activeTab === 'tattoos'
+                ? 'text-black border-b-2 border-black'
+                : 'text-black/50 hover:text-black/70'
+            }`}
+          >
+            Generated Tattoos ({generatedTattoos.length})
+          </button>
+        </div>
+
+        {/* Filter Sets Tab */}
+        {activeTab === 'filters' && (
+          <>
+            {filterSets.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-sm text-black/50 tracking-wide mb-4">
               No saved filter sets yet
@@ -195,6 +230,53 @@ export function ProfileModal({ onClose, onApplyFilters }: ProfileModalProps) {
             ))}
           </div>
         )}
+          </>
+        )}
+
+        {/* Generated Tattoos Tab */}
+        {activeTab === 'tattoos' && (
+          <>
+            {generatedTattoos.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-sm text-black/50 tracking-wide mb-4">
+                  No generated tattoos yet
+                </p>
+                <p className="text-xs text-black/40 tracking-wide">
+                  Generate tattoos using your saved filter sets
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                {generatedTattoos.map((tattoo) => (
+                  <div
+                    key={tattoo.id}
+                    className="group relative aspect-square overflow-hidden bg-black border border-black/10 hover:border-black/30 transition-colors"
+                  >
+                    <Image
+                      src={tattoo.imageUrl}
+                      alt={tattoo.subjectMatter || 'Generated tattoo'}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 50vw, 33vw"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute bottom-0 left-0 right-0 p-3">
+                        <p className="text-white text-xs font-medium truncate">
+                          {tattoo.subjectMatter}
+                        </p>
+                        {tattoo.filterSetName && (
+                          <p className="text-white/70 text-xs truncate mt-1">
+                            {tattoo.filterSetName}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
 
         <div className="mt-10 pt-8 border-t border-black/10">
           <button
@@ -209,10 +291,20 @@ export function ProfileModal({ onClose, onApplyFilters }: ProfileModalProps) {
       {generatingForFilterSet && (
         <GenerateTattooModal
           filterSet={generatingForFilterSet}
-          onClose={() => setGeneratingForFilterSet(null)}
+          onClose={() => {
+            setGeneratingForFilterSet(null);
+            // Refresh generated tattoos when modal closes (in case a new one was saved)
+            if (user?.uid) {
+              getUserGeneratedTattoos(user.uid).then(setGeneratedTattoos).catch(console.error);
+            }
+          }}
           onSuccess={(imageUrl) => {
             // Keep the modal open so the user can view/download the image.
             console.log('Tattoo generated successfully:', imageUrl);
+            // Refresh generated tattoos list
+            if (user?.uid) {
+              getUserGeneratedTattoos(user.uid).then(setGeneratedTattoos).catch(console.error);
+            }
           }}
         />
       )}

@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { FilterSet } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { saveGeneratedTattoo } from '@/lib/firestore';
+import { blobUrlToFile, getGeneratedTattooImagePath, uploadImage } from '@/lib/storage';
 
 interface GenerateTattooModalProps {
   filterSet: FilterSet;
@@ -10,8 +13,10 @@ interface GenerateTattooModalProps {
 }
 
 export function GenerateTattooModal({ filterSet, onClose, onSuccess }: GenerateTattooModalProps) {
+  const { user } = useAuth();
   const [subjectMatter, setSubjectMatter] = useState('');
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [generatedDescription, setGeneratedDescription] = useState<string | null>(null);
@@ -21,6 +26,7 @@ export function GenerateTattooModal({ filterSet, onClose, onSuccess }: GenerateT
   const [needsSetup, setNeedsSetup] = useState(false);
   const [imageLoading, setImageLoading] = useState(false);
   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
 
   // Cleanup Blob URL when component unmounts or image changes
   useEffect(() => {
@@ -30,6 +36,48 @@ export function GenerateTattooModal({ filterSet, onClose, onSuccess }: GenerateT
       }
     };
   }, [blobUrl]);
+
+  // Function to save generated tattoo to Firestore
+  const saveGeneratedTattooToCollection = async (imageUrl: string, prompt: string) => {
+    if (!user?.uid) {
+      console.log('User not authenticated, skipping save');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      // Convert blob URL to File
+      const file = await blobUrlToFile(imageUrl, `generated-tattoo-${Date.now()}.png`);
+      
+      // Create a temporary ID for the tattoo
+      const tempTattooId = `gen_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Upload image to Firebase Storage
+      const imagePath = getGeneratedTattooImagePath(user.uid, tempTattooId);
+      const uploadedImageUrl = await uploadImage(file, imagePath);
+      
+      // Save tattoo data to Firestore
+      const tattooId = await saveGeneratedTattoo(user.uid, {
+        imageUrl: uploadedImageUrl,
+        prompt: prompt,
+        subjectMatter: subjectMatter.trim(),
+        filterSetId: filterSet.id,
+        filterSetName: filterSet.name,
+        styles: filterSet.styles,
+        sizePreference: filterSet.sizePreference || undefined,
+        colorPreference: filterSet.colorPreference || undefined,
+        bodyParts: filterSet.bodyParts,
+      });
+      
+      console.log('✅ Generated tattoo saved successfully:', tattooId);
+      setSaved(true);
+    } catch (err: any) {
+      console.error('Failed to save generated tattoo:', err);
+      // Don't show error to user - saving is automatic and shouldn't interrupt their flow
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!subjectMatter.trim()) {
@@ -151,8 +199,20 @@ export function GenerateTattooModal({ filterSet, onClose, onSuccess }: GenerateT
         
         setImageLoading(true);
         setGeneratedImage(imageUrl);
+        setSaved(false);
         
         console.log('Image state updated, URL:', imageUrl.substring(0, 50));
+        
+        // Automatically save the generated tattoo
+        if (user?.uid && imageUrl) {
+          // Use the prompt from the API response, which should always be included
+          const promptToSave = data.prompt || '';
+          if (promptToSave) {
+            saveGeneratedTattooToCollection(imageUrl, promptToSave);
+          } else {
+            console.warn('No prompt available for saving generated tattoo');
+          }
+        }
         
         if (onSuccess) {
           onSuccess(imageUrl);
@@ -268,7 +328,15 @@ export function GenerateTattooModal({ filterSet, onClose, onSuccess }: GenerateT
 
         {generatedImage && (
           <div className="mb-6">
-            <h3 className="text-lg font-light text-black mb-3">Generated Design</h3>
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-lg font-light text-black">Generated Design</h3>
+              {saving && (
+                <span className="text-xs text-black/50">Saving...</span>
+              )}
+              {saved && !saving && (
+                <span className="text-xs text-green-600">✓ Saved</span>
+              )}
+            </div>
             <div 
               className="border border-black/20 p-4 bg-black/5 min-h-[200px] flex items-center justify-center relative"
               style={{ minHeight: '200px', backgroundColor: 'rgba(0,0,0,0.05)' }}

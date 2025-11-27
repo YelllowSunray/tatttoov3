@@ -18,6 +18,10 @@ export default function Home() {
   const { user, loading, signOut } = useAuth();
 
   const handleApplyFilterSet = (filterSet: FilterSet) => {
+    // When user explicitly clicks "Apply" on a filter set:
+    // - CLEAR all existing filters (search, price, location, etc.)
+    // - Apply only the filter set's preferences
+    // This gives a clean, predictable state matching the saved filter set
     const filters: FilterOptions = {
       search: '',
       style: filterSet.styles.length > 0 ? filterSet.styles[0] : '',
