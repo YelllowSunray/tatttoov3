@@ -7,6 +7,7 @@ import { FilterSet, UserPreferences } from '@/types';
 import { FilterOptions } from './FilterBar';
 import { GenerateTattooModal } from './GenerateTattooModal';
 import Image from 'next/image';
+import Link from 'next/link';
 
 interface ProfileModalProps {
   onClose: () => void;
@@ -188,9 +189,16 @@ export function ProfileModal({ onClose, onApplyFilters, showWelcomeMessage = fal
             <p className="text-sm text-black/50 tracking-wide mb-4">
               No saved filter sets yet
             </p>
-            <p className="text-xs text-black/40 tracking-wide">
-              Complete the beginners questionnaire to save your first filter set
+            <p className="text-xs text-black/40 tracking-wide mb-6">
+              We recommend going to "For Beginners" to create your first filter set
             </p>
+            <Link
+              href="/beginners"
+              onClick={onClose}
+              className="inline-block rounded-full bg-black px-6 py-3 text-xs font-medium text-white transition-all duration-200 hover:bg-black/90 active:bg-black/95 uppercase tracking-[0.1em] min-h-[44px] touch-manipulation"
+            >
+              Go to For Beginners
+            </Link>
           </div>
         ) : (
           <div className="space-y-4">

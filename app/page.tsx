@@ -122,19 +122,20 @@ export default function Home() {
                     For beginners
                   </Link>
                 )}
-                <Link
+                {/* Temporarily hidden - For artists link */}
+                {/* <Link
                   href="/studio"
                   className="text-xs text-black/40 hover:text-black transition-colors duration-200 uppercase tracking-[0.1em] min-h-[44px] flex items-center"
                 >
                   For artists
-                </Link>
+                </Link> */}
                 {user ? (
                   <>
                     <button
                       onClick={() => setShowProfileModal(true)}
                       className="rounded-full border border-black px-5 py-2.5 text-xs font-medium text-black transition-all duration-200 hover:bg-black hover:text-white active:bg-black/95 uppercase tracking-[0.1em] min-h-[44px] touch-manipulation"
                     >
-                      Profile
+                      AI Generator
                     </button>
                     <button
                       onClick={signOut}

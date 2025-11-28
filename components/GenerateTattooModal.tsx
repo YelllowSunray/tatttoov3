@@ -566,6 +566,11 @@ export function GenerateTattooModal({ filterSet, onClose, onSuccess }: GenerateT
               <span className="font-medium text-black/80">Styles:</span> {filterSet.styles.join(', ')}
             </p>
           )}
+          {filterSet.bodyParts && filterSet.bodyParts.length > 0 && (
+            <p className="text-sm text-black/60 mb-2">
+              <span className="font-medium text-black/80">Placement:</span> {filterSet.bodyParts.join(', ')}
+            </p>
+          )}
           {filterSet.sizePreference && filterSet.sizePreference !== 'all' && (
             <p className="text-sm text-black/60 mb-2">
               <span className="font-medium text-black/80">Size:</span> {filterSet.sizePreference.charAt(0).toUpperCase() + filterSet.sizePreference.slice(1)}
@@ -587,7 +592,7 @@ export function GenerateTattooModal({ filterSet, onClose, onSuccess }: GenerateT
             id="subjectMatter"
             value={subjectMatter}
             onChange={(e) => setSubjectMatter(e.target.value)}
-            placeholder="e.g., a woman dancing in the line, a rose with thorns, a geometric wolf..."
+            placeholder="e.g. rough seas on back, roses with thorns on my arm, or a woman on my chest"
             className="w-full px-4 py-3 border border-black/20 focus:border-black focus:outline-none text-black placeholder:text-black/40 min-h-[100px] resize-y"
             disabled={loading}
           />
@@ -614,7 +619,7 @@ export function GenerateTattooModal({ filterSet, onClose, onSuccess }: GenerateT
                   Generate in All Styles
                 </span>
                 <span className="text-xs text-black/50">
-                  Generate the same design in all 15 tattoo styles (uses Vertex AI, may take longer)
+                  It's recommended to select all 15 styles, rendering will take 60 seconds.
                 </span>
               </div>
             </label>
