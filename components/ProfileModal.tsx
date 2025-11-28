@@ -241,13 +241,13 @@ export function ProfileModal({ onClose, onApplyFilters, showWelcomeMessage = fal
                   <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       onClick={() => handleApply(filterSet)}
-                      className="rounded-full bg-black px-5 py-2.5 text-xs font-medium text-white transition-all duration-200 hover:bg-black/90 active:bg-black/95 uppercase tracking-[0.1em] min-h-[44px] touch-manipulation whitespace-nowrap"
+                      className="rounded-full border border-black/20 px-5 py-2.5 text-xs font-medium text-black/60 transition-all duration-200 hover:border-black/40 hover:text-black active:bg-black/5 uppercase tracking-[0.1em] min-h-[44px] touch-manipulation whitespace-nowrap"
                     >
                       Apply
                     </button>
                     <button
                       onClick={() => setGeneratingForFilterSet(filterSet)}
-                      className="rounded-full border border-black/20 px-5 py-2.5 text-xs font-medium text-black/60 transition-all duration-200 hover:border-black/40 hover:text-black active:bg-black/5 uppercase tracking-[0.1em] min-h-[44px] touch-manipulation whitespace-nowrap"
+                      className="rounded-full bg-black px-5 py-2.5 text-xs font-medium text-white transition-all duration-200 hover:bg-black/90 active:bg-black/95 uppercase tracking-[0.1em] min-h-[44px] touch-manipulation whitespace-nowrap"
                     >
                       Generate Tattoo
                     </button>

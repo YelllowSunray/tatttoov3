@@ -1397,16 +1397,19 @@ function CompletionView({ preferences, filterName, onFilterNameChange }: Complet
         Save Your Preferences
       </h3>
       
-      <div className="mb-6 max-w-md mx-auto">
-        <label className="mb-3 block text-xs font-medium text-black/60 uppercase tracking-wider text-center">
-          Give this filter set a name
+      <div className="mb-6 max-w-lg mx-auto">
+        <label className="mb-2 block text-base font-medium text-black tracking-wide text-center">
+          Name your tattoo preferences
         </label>
+        <p className="text-xs text-black/50 mb-6 text-center">
+          Give your preferences a name so you can easily find and use them later (e.g., "My First Tattoo Ideas", "Bold & Colorful Style", "Minimalist Collection")
+        </p>
         <input
           type="text"
           value={filterName}
           onChange={(e) => onFilterNameChange(e.target.value)}
-          placeholder="e.g., My First Tattoo, Bold & Colorful, etc."
-          className="w-full border-b border-black/20 bg-transparent px-0 py-3 text-base text-black placeholder-black/30 focus:border-black focus:outline-none transition-colors duration-200 text-center"
+          placeholder="Enter a name for your preferences..."
+          className="w-full border-2 border-black/30 bg-white px-6 py-4 text-lg text-black placeholder-black/40 focus:border-black focus:outline-none focus:ring-2 focus:ring-black/10 transition-all duration-200 text-center font-light"
         />
       </div>
 
@@ -1430,14 +1433,6 @@ function CompletionView({ preferences, filterName, onFilterNameChange }: Complet
           <strong>✨ Next Step:</strong>
         </p>
         <p className="text-xs text-black/60">
-          After saving, you'll go to your profile where you can use AI to generate custom tattoo designs based on these preferences!
-        </p>
-      </div>
-      <div className="mt-6 p-4 bg-black/5 border border-black/10 rounded-lg">
-        <p className="text-xs text-black/70 mb-1 text-center">
-          <strong>✨ Next Step:</strong>
-        </p>
-        <p className="text-xs text-black/60 text-center">
           After saving, you'll go to your profile where you can use AI to generate custom tattoo designs based on these preferences!
         </p>
       </div>
